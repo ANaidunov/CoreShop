@@ -24,18 +24,18 @@ namespace CoreShop.Controllers
         }
 
         [HttpGet] // GET api/products
-        public ActionResult<IEnumerable<ProductReadDTO>> GetAllProducts()
+        public async Task<ActionResult<IEnumerable<ProductReadDTO>>> GetAllProducts()
         {
-            var products = _repository.GetAllProducts();
+            var products = await _repository.GetAllProductsAsync();
             var productDtos = _mapper.Map<IEnumerable<ProductReadDTO>>(products);
 
             return Ok(productDtos);
         }
 
         [HttpGet("{id}", Name = nameof(GetProductById))] // GET api/products/5
-        public ActionResult<ProductReadDTO> GetProductById(int id)
+        public async Task<ActionResult<ProductReadDTO>> GetProductById(int id)
         {
-            var product = _repository.GetProductById(id);
+            var product = await _repository.GetProductByIdAsync(id);
 
             if (product is null) return NotFound();
 
@@ -44,13 +44,14 @@ namespace CoreShop.Controllers
         }
 
         [HttpPost] // POST api/products
-        public ActionResult<ProductReadDTO> CreateProduct(ProductCreateDTO productCreateDTO)
+        public async Task<ActionResult<ProductReadDTO>> CreateProduct(ProductCreateDTO productCreateDTO)
         {
             if (productCreateDTO is null) throw new ArgumentNullException(nameof(productCreateDTO));
 
             var productModel = _mapper.Map<Product>(productCreateDTO);
             _repository.CreateProduct(productModel);
-            _repository.SaveChanges();
+
+            await _repository.SaveChangesAsync();
 
             var productReadDto = _mapper.Map<ProductReadDTO>(productModel);
 
@@ -58,9 +59,9 @@ namespace CoreShop.Controllers
         }
 
         [HttpPut("{id}")] // PUT api/products/{id}
-        public IActionResult UpdateProduct(int id, ProductCreateDTO productCreateDTO)
+        public async Task<IActionResult> UpdateProduct(int id, ProductCreateDTO productCreateDTO)
         {
-            var productModelFromRepo = _repository.GetProductById(id);
+            var productModelFromRepo = await _repository.GetProductByIdAsync(id);
             if (productModelFromRepo is null)
             {
                 return NotFound();
@@ -69,31 +70,31 @@ namespace CoreShop.Controllers
             _mapper.Map(productCreateDTO, productModelFromRepo);
 
             _repository.UpdateProduct(productModelFromRepo);
-            _repository.SaveChanges();
+            await _repository.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpDelete("{id}")] // DELETE api/products/{id}
-        public IActionResult DeleteProductById(int id)
+        public async Task<IActionResult> DeleteProductById(int id)
         {
-            var productModelFromRepo = _repository.GetProductById(id);
+            var productModelFromRepo = await _repository.GetProductByIdAsync(id);
             if(productModelFromRepo is null)
             {
                 return NotFound();
             }
 
             _repository.DeleteProduct(productModelFromRepo);
-            _repository.SaveChanges();
+            await _repository.SaveChangesAsync();
 
             return NoContent();
         }
 
         // PATCH api/products/{id}
         [HttpPatch("{id}")]
-        public ActionResult PartialProductUpdate(int id, JsonPatchDocument<ProductCreateDTO> patchDocument)
+        public async Task<ActionResult> PartialProductUpdate(int id, JsonPatchDocument<ProductCreateDTO> patchDocument)
         {
-            var productModelFromRepo = _repository.GetProductById(id);
+            var productModelFromRepo = await _repository.GetProductByIdAsync(id);
             if (productModelFromRepo is null)
             {
                 return NotFound();
@@ -109,7 +110,8 @@ namespace CoreShop.Controllers
 
             _mapper.Map(productToPatch, productModelFromRepo);
             _repository.UpdateProduct(productModelFromRepo);
-            _repository.SaveChanges();
+
+            await _repository.SaveChangesAsync();
 
             return NoContent();
         }
